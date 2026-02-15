@@ -8,6 +8,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from apps.users.views import AuthViewSet
 from apps.blog.views import PostViewSet
+from apps.blog.handlers import handler403
 
 # Rate-limited login: 10/minute per IP (per README)
 RateLimitedTokenObtainPairView = method_decorator(
@@ -32,3 +33,5 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# handler403 (imported above): returns 429 with required body when rate limit exceeded
