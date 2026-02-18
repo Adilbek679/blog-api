@@ -1,23 +1,29 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from django.core.cache import cache
-from django.db.models import Q
-from django.utils.decorators import method_decorator
-from django_ratelimit.decorators import ratelimit
-from .models import Post, Comment
-from .serializers import (
-    PostSerializer, PostCreateUpdateSerializer, 
-    CommentSerializer
-)
-from .permissions import IsAuthorOrReadOnly
 import json
 import logging
 import redis
 from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Q
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+
+from .models import Post, Comment, PostStatus
+from .permissions import IsAuthorOrReadOnly
+from .serializers import (
+    CommentSerializer,
+    PostCreateUpdateSerializer,
+    PostSerializer,
+)
 
 logger = logging.getLogger(__name__)
+
+# Constants (no magic strings/numbers)
+CACHE_KEY_POSTS_LIST = 'published_posts_list'
+CACHE_TTL_SECONDS = 60
 
 # Redis connection for pub/sub
 redis_client = redis.Redis.from_url(settings.CACHES['default']['LOCATION'])
@@ -38,63 +44,55 @@ class PostViewSet(viewsets.ModelViewSet):
         
         # Only show published posts to unauthenticated users
         if not self.request.user.is_authenticated:
-            queryset = queryset.filter(status='published')
+            queryset = queryset.filter(status=PostStatus.PUBLISHED)
         elif self.action == 'list':
             # Authors can see their own drafts
             queryset = queryset.filter(
-                Q(status='published') | Q(author=self.request.user)
+                Q(status=PostStatus.PUBLISHED) | Q(author=self.request.user)
             )
         
         return queryset
     
     @method_decorator(ratelimit(key='user', rate='20/m', method='POST'))
-    def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs) -> Response:
         logger.info('Post creation attempt by: %s', request.user.email)
         return super().create(request, *args, **kwargs)
     
-    def list(self, request, *args, **kwargs):
-        # Try to get from cache
-        cache_key = 'published_posts_list'
-        cached_data = cache.get(cache_key)
-        
+    def list(self, request, *args, **kwargs) -> Response:
+        cached_data = cache.get(CACHE_KEY_POSTS_LIST)
         if cached_data and not request.user.is_authenticated:
             logger.debug('Returning cached posts list')
             return Response(cached_data)
-        
         response = super().list(request, *args, **kwargs)
-        
-        # Cache for unauthenticated users only
         if not request.user.is_authenticated:
-            cache.set(cache_key, response.data, 60)  # 60 seconds
+            cache.set(CACHE_KEY_POSTS_LIST, response.data, CACHE_TTL_SECONDS)
             logger.debug('Cached posts list')
-        
         return response
-    
-    def perform_create(self, serializer):
+
+    def perform_create(self, serializer) -> None:
         post = serializer.save()
-        # Invalidate cache
-        cache.delete('published_posts_list')
+        cache.delete(CACHE_KEY_POSTS_LIST)
         logger.info('Post created: %s', post.title)
-    
-    def perform_update(self, serializer):
+
+    def perform_update(self, serializer) -> None:
         post = serializer.save()
-        cache.delete('published_posts_list')
+        cache.delete(CACHE_KEY_POSTS_LIST)
         logger.info('Post updated: %s', post.title)
-    
-    def perform_destroy(self, instance):
-        cache.delete('published_posts_list')
+
+    def perform_destroy(self, instance) -> None:
+        cache.delete(CACHE_KEY_POSTS_LIST)
         logger.info('Post deleted: %s', instance.title)
         instance.delete()
     
     @action(detail=True, methods=['get'])
-    def comments(self, request, slug=None):
+    def comments(self, request, slug=None) -> Response:
         post = self.get_object()
         comments = post.comments.select_related('author').all()
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
     
     @comments.mapping.post
-    def add_comment(self, request, slug=None):
+    def add_comment(self, request, slug=None) -> Response:
         post = self.get_object()
         serializer = CommentSerializer(data=request.data)
         

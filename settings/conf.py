@@ -1,6 +1,7 @@
 from decouple import config
 
-def get_config():
+
+def get_config() -> dict:
     return {
         'SECRET_KEY': config('BLOG_SECRET_KEY'),
         'DEBUG': config('BLOG_DEBUG', default=False, cast=bool),

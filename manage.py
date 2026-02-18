@@ -14,7 +14,7 @@ def main():
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
-                    key, _, value = line.split('=', 1)
+                    key, value = line.split('=', 1)
                     if key.strip() == 'BLOG_ENV_ID':
                         os.environ['DJANGO_SETTINGS_MODULE'] = f"settings.env.{value.strip()}"
                         break

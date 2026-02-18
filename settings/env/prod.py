@@ -1,9 +1,10 @@
-from ..base import *
+from ..base import *  # noqa: F403
+
+import dj_database_url
 
 DEBUG = False
 
 # PostgreSQL (set BLOG_DATABASE_URL in settings/.env or environment)
-import dj_database_url
 DATABASES = {
     'default': dj_database_url.config(
         conn_max_age=600,
@@ -15,7 +16,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': config['REDIS_URL'],
+        'LOCATION': config['REDIS_URL'],  # noqa: F405
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
