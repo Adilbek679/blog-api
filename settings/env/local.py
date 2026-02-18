@@ -1,18 +1,11 @@
-from pathlib import Path
-
-from ..base import *
+from ..base import *  # noqa: F403
 
 DEBUG = True
-
-# Logging file size constants (no magic numbers)
-LOG_FILE_MAX_BYTES = 5242880  # 5 MB
-LOG_APP_BACKUP_COUNT = 3
-LOG_DEBUG_REQUESTS_BACKUP_COUNT = 2
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',  # noqa: F405
     }
 }
 
@@ -44,17 +37,17 @@ LOGGING = {
         'file': {
             'level': 'WARNING',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs/app.log',
-            'maxBytes': LOG_FILE_MAX_BYTES,
-            'backupCount': LOG_APP_BACKUP_COUNT,
+            'filename': BASE_DIR / 'logs/app.log',  # noqa: F405
+            'maxBytes': 5242880,  # 5 MB
+            'backupCount': 3,
             'formatter': 'verbose',
         },
         'debug_requests': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs/debug_requests.log',
-            'maxBytes': LOG_FILE_MAX_BYTES,
-            'backupCount': LOG_DEBUG_REQUESTS_BACKUP_COUNT,
+            'filename': BASE_DIR / 'logs/debug_requests.log',  # noqa: F405
+            'maxBytes': 5242880,
+            'backupCount': 2,
             'formatter': 'verbose',
             'filters': ['require_debug_true'],
         },
@@ -87,7 +80,7 @@ LOGGING = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': config['REDIS_URL'],
+        'LOCATION': config['REDIS_URL'],  # noqa: F405
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }

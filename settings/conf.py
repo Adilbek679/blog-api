@@ -2,7 +2,6 @@ from decouple import config
 
 
 def get_config() -> dict:
-    """Read BLOG_* variables from environment / .env and return config dict."""
     return {
         'SECRET_KEY': config('BLOG_SECRET_KEY'),
         'DEBUG': config('BLOG_DEBUG', default=False, cast=bool),

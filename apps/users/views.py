@@ -11,17 +11,19 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class AuthViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
-
-    @method_decorator(ratelimit(key='ip', rate='5/m', method='POST'))
+    
     @action(detail=False, methods=['post'])
+    @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True))
     def register(self, request) -> Response:
+        """
+        Register a new user.
+        Rate limit: 5 requests per minute per IP (handler403 returns 429 when exceeded).
+        """
         logger.info('Registration attempt for email: %s', request.data.get('email'))
-        
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()

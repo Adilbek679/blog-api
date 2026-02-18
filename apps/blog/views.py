@@ -21,7 +21,7 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 
-# Cache key and TTL for published posts list (no magic strings/numbers)
+# Constants (no magic strings/numbers)
 CACHE_KEY_POSTS_LIST = 'published_posts_list'
 CACHE_TTL_SECONDS = 60
 
@@ -54,12 +54,11 @@ class PostViewSet(viewsets.ModelViewSet):
         return queryset
     
     @method_decorator(ratelimit(key='user', rate='20/m', method='POST'))
-    def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs) -> Response:
         logger.info('Post creation attempt by: %s', request.user.email)
         return super().create(request, *args, **kwargs)
     
     def list(self, request, *args, **kwargs) -> Response:
-        # Try to get from cache (manual cache.get/set; invalidation on write)
         cached_data = cache.get(CACHE_KEY_POSTS_LIST)
         if cached_data and not request.user.is_authenticated:
             logger.debug('Returning cached posts list')
@@ -86,14 +85,14 @@ class PostViewSet(viewsets.ModelViewSet):
         instance.delete()
     
     @action(detail=True, methods=['get'])
-    def comments(self, request, slug=None):
+    def comments(self, request, slug=None) -> Response:
         post = self.get_object()
         comments = post.comments.select_related('author').all()
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
     
     @comments.mapping.post
-    def add_comment(self, request, slug=None):
+    def add_comment(self, request, slug=None) -> Response:
         post = self.get_object()
         serializer = CommentSerializer(data=request.data)
         

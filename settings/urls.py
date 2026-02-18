@@ -1,20 +1,26 @@
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
+from django_ratelimit.exceptions import Ratelimited
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from apps.users.views import AuthViewSet
 from apps.blog.views import PostViewSet
-from apps.blog.handlers import handler403
 
-# Rate-limited login: 10/minute per IP (per README)
+# Rate-limited views
 RateLimitedTokenObtainPairView = method_decorator(
     ratelimit(key='ip', rate='10/m', method='POST'),
     name='post'
 )(TokenObtainPairView)
+
+RateLimitedTokenRefreshView = method_decorator(
+    ratelimit(key='ip', rate='10/m', method='POST'),
+    name='post'
+)(TokenRefreshView)
 
 router = DefaultRouter()
 router.register(r'posts', PostViewSet, basename='post')
@@ -22,10 +28,10 @@ router.register(r'posts', PostViewSet, basename='post')
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # API auth endpoints
+    # API auth endpoints with rate limiting
     path('api/auth/register/', AuthViewSet.as_view({'post': 'register'}), name='register'),
     path('api/auth/token/', RateLimitedTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/token/refresh/', RateLimitedTokenRefreshView.as_view(), name='token_refresh'),
     
     # API blog endpoints
     path('api/', include(router.urls)),
@@ -34,4 +40,11 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# handler403 (imported above): returns 429 with required body when rate limit exceeded
+# Custom 403 handler: 429 with required body when rate limit exceeded, else 403
+def handler403(request, exception=None):
+    if exception is not None and isinstance(exception, Ratelimited):
+        return JsonResponse(
+            {'detail': 'Too many requests. Try again later.'},
+            status=429,
+        )
+    return JsonResponse({'detail': 'Permission denied.'}, status=403)
