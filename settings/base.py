@@ -1,5 +1,6 @@
 from pathlib import Path
 from .conf import get_config
+from django.utils.translation import gettext_lazy as _
 
 config = get_config()
 
@@ -32,11 +33,26 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.core.middleware.LanguageMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.blog.middleware.DebugRequestLoggingMiddleware',
 ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': config['REDIS_URL'],
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'blog_api',
+        'VERSION': 1,
+        'KEY_FUNCTION': 'apps.core.cache.make_key', 
+    }
+}
 ROOT_URLCONF = 'settings.urls'
 
 TEMPLATES = [
@@ -69,6 +85,16 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+LANGUAGES = [
+        ('en', _('English')),
+        ('ru', _('Russian')),
+        ('kz', _('Kazakh')),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale'
+]
+
 STATIC_URL = 'static/'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -88,3 +114,4 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10
 }
+

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import User
 import logging
+from django.utils.translation import gettext_lazy as _
+import pytz
 
 logger = logging.getLogger(__name__)
 
@@ -33,3 +35,27 @@ class RegisterSerializer(serializers.ModelSerializer):
         
         logger.info('User registered: %s', user.email)
         return user
+    
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['preferred_language']
+        
+    def validate_preferred_language(self, value):
+        if value not in dict(User.LANGUAGE_CHOICES):
+            raise serializers.ValidationError(
+                _('Invalid language choice. Supported: en, ru, kz')
+            )
+        return value
+
+class TimezoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['timezone']
+        
+    def validate_timezone(self, value):
+        if value not in pytz.all_timezones:
+            raise serializers.ValidationError(
+                _('Invalid IANA timezone identifier')
+            )
+        return value

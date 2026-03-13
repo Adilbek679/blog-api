@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
 from apps.users.models import User
 import logging
@@ -10,20 +11,34 @@ class PostStatus(models.TextChoices):
     PUBLISHED = 'published', 'Published'
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name_en = models.CharField(max_length=100, verbose_name=_('Name (English)'), null=True, blank=True)
+    name_ru = models.CharField(max_length=100, verbose_name=_('Name (Russian)'), blank=True)
+    name_kz = models.CharField(max_length=100, verbose_name=_('Name (Kazakh)'), blank=True)
     slug = models.SlugField(unique=True)
     
     class Meta:
-        verbose_name_plural = 'Categories'
-    
+        verbose_name =_('category')
+        verbose_name_plural =_('categories')
+        
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = slugify(self.name_en)
         super().save(*args, **kwargs)
     
-    def __str__(self) -> str:
+    @property
+    def name(self):
+        from django.utils import translation
+        lang = translation.get_language()
+        
+        name = getattr(self, f'name_{lang}', None)
+        
+        if not name:
+            name = self.name_en
+        return name
+    
+    def __str__(self):
         return self.name
-
+            
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(unique=True)

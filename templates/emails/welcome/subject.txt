@@ -1,0 +1,3 @@
+Welcome to Blog API!
+Добро пожаловать в Blog API!
+Blog APIға Қош келдіңіз!

@@ -1,0 +1,100 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-13 19:11+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+#: apps/blog/models.py:14
+msgid "Name (English)"
+msgstr ""
+
+#: apps/blog/models.py:15
+msgid "Name (Russian)"
+msgstr ""
+
+#: apps/blog/models.py:16
+msgid "Name (Kazakh)"
+msgstr ""
+
+#: apps/blog/models.py:20
+msgid "category"
+msgstr ""
+
+#: apps/blog/models.py:21
+msgid "categories"
+msgstr ""
+
+#: apps/users/models.py:50 settings/base.py:89
+msgid "English"
+msgstr ""
+
+#: apps/users/models.py:51 settings/base.py:90
+msgid "Russian"
+msgstr ""
+
+#: apps/users/models.py:52 settings/base.py:91
+msgid "Kazakh"
+msgstr ""
+
+#: apps/users/models.py:59
+msgid "preferred language"
+msgstr ""
+
+#: apps/users/models.py:65
+msgid "timezone"
+msgstr ""
+
+#: apps/users/serializers.py:47
+msgid "Invalid language choice. Supported: en, ru, kz"
+msgstr ""
+
+#: apps/users/serializers.py:59
+msgid "Invalid IANA timezone identifier"
+msgstr ""
+
+#: templates/emails/welcome/body.txt:3
+msgid "Hello"
+msgstr ""
+
+#: templates/emails/welcome/body.txt:5
+msgid "Thank you for registering at Blog API."
+msgstr ""
+
+#: templates/emails/welcome/body.txt:7
+msgid "You can now:"
+msgstr ""
+
+#: templates/emails/welcome/body.txt:8
+msgid "Create on posts"
+msgstr ""
+
+#: templates/emails/welcome/body.txt:9
+msgid "Comment on posts"
+msgstr ""
+
+#: templates/emails/welcome/body.txt:10
+msgid "Manage your profile"
+msgstr ""
+
+#: templates/emails/welcome/body.txt:12
+msgid "Best regards,"
+msgstr ""
+
+#: templates/emails/welcome/body.txt:13
+msgid "Blog API Team,"
+msgstr ""

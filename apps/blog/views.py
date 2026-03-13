@@ -11,6 +11,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
+from django.utils import translation
+from django.utils.timezone import localtime
+import pytz
+
 from .models import Post, Comment, PostStatus
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
@@ -120,3 +124,32 @@ class PostViewSet(viewsets.ModelViewSet):
             )
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def list(self, request, *args, **kwargs) -> Response:
+        lang = translation.get_language()
+        cache_key = f'{CACHE_KEY_POSTS_LIST}:{lang}'
+        cached_data = cache.get(cache_key)
+        
+        if cached_data and not request.user.is_authenticated:
+            logger.debug('Returning cached posts list for language %s', lang)
+            return Response(cached_data)
+        
+        response = super().list(request, *args, **kwargs)
+        
+        if request.user.is_authenticated and request.user.timezone:
+            tz = pytz.timezone(request.user.timezone)
+            for post in response.data.get('results', []):
+                if 'created_at' in post:
+                    pass
+        
+        if not request.user.is_authenticated:
+            cache.set(cache_key, response.data, CACHE_TTL_SECONDS)
+            logger.debug('Cached posts list for language %s', lang)
+        
+        return response
+    
+    def perform_create(self, serializer):
+        post = serializer.save()
+        for lang_code, _ in settings.LANGUAGES:
+            cache.delete(f'{CACHE_KEY_POSTS_LIST}:{lang_code}')
+        logger.info('Post created: %s', post.title)

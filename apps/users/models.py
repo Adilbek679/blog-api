@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import EmailValidator
 import logging
+from django.utils.translation import gettext_lazy as _
+import pytz
 
 logger = logging.getLogger(__name__)
 
@@ -43,3 +45,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def get_full_name(self) -> str:
         return f'{self.first_name} {self.last_name}'.strip()
+        
+    LANGUAGE_CHOICES = [
+        ('en', _('English')),
+        ('ru', _('Russian')),
+        ('kz', _('Kazakh')),
+    ]
+    
+    preferred_language = models.CharField(
+        max_length=10, 
+        choices=LANGUAGE_CHOICES,
+        default='en',
+        verbose_name=_('preferred language')
+    )
+    timezone = models.CharField(
+        max_length=50,
+        default='UTC',
+        choices=[(tz, tz) for tz in pytz.common_timezones],
+        verbose_name=_('timezone')
+    )

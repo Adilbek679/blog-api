@@ -1,0 +1,14 @@
+{% load i18n %}
+{% language user_languuage %}
+{% trans "Hello" %} {{ user.first_name }}
+
+{% trans "Thank you for registering at Blog API." %}
+
+{% trans "You can now:" %}
+- {% trans "Create on posts" %}
+- {% trans "Comment on posts" %}
+- {% trans "Manage your profile" %}
+
+{% trans "Best regards," %}
+{% trans "Blog API Team," %}
+{% endlanguage %}
