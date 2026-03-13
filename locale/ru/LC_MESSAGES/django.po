@@ -19,82 +19,84 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
 "(n%100>=11 && n%100<=14)? 2 : 3);\n"
-#: apps/blog/models.py:14
-msgid "Name (English)"
-msgstr ""
 
 #: apps/blog/models.py:15
-msgid "Name (Russian)"
-msgstr ""
-
-#: apps/blog/models.py:16
-msgid "Name (Kazakh)"
-msgstr ""
-
-#: apps/blog/models.py:20
-msgid "category"
-msgstr ""
-
-#: apps/blog/models.py:21
-msgid "categories"
-msgstr ""
-
-#: apps/users/models.py:50 settings/base.py:89
-msgid "English"
-msgstr ""
-
-#: apps/users/models.py:51 settings/base.py:90
-msgid "Russian"
-msgstr ""
-
-#: apps/users/models.py:52 settings/base.py:91
-msgid "Kazakh"
-msgstr ""
-
-#: apps/users/models.py:59
-msgid "preferred language"
-msgstr ""
-
-#: apps/users/models.py:65
-msgid "timezone"
-msgstr ""
-
-#: apps/users/serializers.py:47
-msgid "Invalid language choice. Supported: en, ru, kz"
-msgstr ""
-
-#: apps/users/serializers.py:59
-msgid "Invalid IANA timezone identifier"
-msgstr ""
-
 #: templates/emails/welcome/body.txt:3
 msgid "Hello"
-msgstr ""
+msgstr "Здравствуйте"
 
 #: templates/emails/welcome/body.txt:5
 msgid "Thank you for registering at Blog API."
-msgstr ""
+msgstr "Спасибо за регистрацию в Blog API."
 
 #: templates/emails/welcome/body.txt:7
 msgid "You can now:"
-msgstr ""
+msgstr "Теперь вы можете:"
 
 #: templates/emails/welcome/body.txt:8
-msgid "Create on posts"
-msgstr ""
+msgid "Create posts"
+msgstr "Создавать посты"
 
 #: templates/emails/welcome/body.txt:9
 msgid "Comment on posts"
-msgstr ""
+msgstr "Комментировать посты"
 
 #: templates/emails/welcome/body.txt:10
 msgid "Manage your profile"
-msgstr ""
+msgstr "Управлять профилем"
 
 #: templates/emails/welcome/body.txt:12
 msgid "Best regards,"
-msgstr ""
+msgstr "С уважением,"
 
 #: templates/emails/welcome/body.txt:13
 msgid "Blog API Team,"
-msgstr ""
+msgstr "Команда Blog API,"
+
+#: apps/blog/models.py:14
+msgid "Name (English)"
+msgstr "Название (английский)"
+
+#: apps/blog/models.py:15
+msgid "Name (Russian)"
+msgstr "Название (русский)"
+
+#: apps/blog/models.py:16
+msgid "Name (Kazakh)"
+msgstr "Название (казахский)"
+
+#: apps/blog/models.py:20
+msgid "category"
+msgstr "категория"
+
+#: apps/blog/models.py:21
+msgid "categories"
+msgstr "категории"
+
+#: apps/users/models.py:50
+msgid "English"
+msgstr "Английский"
+
+#: apps/users/models.py:51
+msgid "Russian"
+msgstr "Русский"
+
+#: apps/users/models.py:52
+msgid "Kazakh"
+msgstr "Казахский"
+
+#: apps/users/models.py:59
+msgid "preferred language"
+msgstr "предпочитаемый язык"
+
+#: apps/users/models.py:65
+msgid "timezone"
+msgstr "часовой пояс"
+
+#: apps/users/serializers.py:47
+msgid "Invalid language choice. Supported: en, ru, kz"
+msgstr "Неверный выбор языка. Поддерживается: en, ru, kz"
+
+#: apps/users/serializers.py:59
+msgid "Invalid IANA timezone identifier"
+msgstr "Неверный идентификатор часового пояса IANA"

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Comment, Category, Tag
 from apps.users.serializers import UserSerializer
+from django.utils.translation import gettext_lazy as _
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,8 @@ class PostSerializer(serializers.ModelSerializer):
             'updated_at', 'comments_count'
         ]
         read_only_fields = ['id', 'author', 'slug', 'created_at', 'updated_at']
+        verbose_name = _('post')
+        verbose_name_plural = _('posts')
 
 class PostCreateUpdateSerializer(serializers.ModelSerializer):
     category_id = serializers.IntegerField(write_only=True)

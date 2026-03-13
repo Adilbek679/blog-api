@@ -11,7 +11,7 @@ class PostStatus(models.TextChoices):
     PUBLISHED = 'published', 'Published'
 
 class Category(models.Model):
-    name_en = models.CharField(max_length=100, verbose_name=_('Name (English)'), null=True, blank=True)
+    name_en = models.CharField(max_length=100, verbose_name=_('Name (English)'), blank=True)
     name_ru = models.CharField(max_length=100, verbose_name=_('Name (Russian)'), blank=True)
     name_kz = models.CharField(max_length=100, verbose_name=_('Name (Kazakh)'), blank=True)
     slug = models.SlugField(unique=True)
@@ -22,7 +22,14 @@ class Category(models.Model):
         
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name_en)
+            base_name = self.name_en or 'category'
+            self.slug = slugify(base_name)
+            
+            original_slug = self.slug
+            counter = 1
+            while Category.objects.filter(slug=self.slug).exists():
+                self.slug = f'{original_slug}-{counter}'
+                counter += 1
         super().save(*args, **kwargs)
     
     @property
@@ -30,11 +37,17 @@ class Category(models.Model):
         from django.utils import translation
         lang = translation.get_language()
         
-        name = getattr(self, f'name_{lang}', None)
+        name_attr = f'name_{lang}'
+        name = getattr(self, name_attr, None)
         
-        if not name:
+        if not name and self.name_en:
             name = self.name_en
+        elif not name:
+            name = 'Unnamed Category'
+        
         return name
+    
+
     
     def __str__(self):
         return self.name
@@ -75,6 +88,10 @@ class Post(models.Model):
     
     def __str__(self) -> str:
         return self.title
+    class Meta:
+        verbose_name = _('post')
+        verbose_name_plural = _('posts')
+        ordering = ['-created_at']
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')

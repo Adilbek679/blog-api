@@ -23,16 +23,27 @@ class AuthViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['post'])
     @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True))
     def register(self, request) -> Response:
-        """
-        Register a new user.
-        Rate limit: 5 requests per minute per IP (handler403 returns 429 when exceeded).
-        """
         logger.info('Registration attempt for email: %s', request.data.get('email'))
         serializer = self.get_serializer(data=request.data)
+        
         if serializer.is_valid():
-            user = serializer.save()
-            refresh = RefreshToken.for_user(user)
+            user = serializer.save()   
+            user_language = request.data.get('preferred_language', 'en')
+            with translation.override(user_language):
+                subject = render_to_string('emails/welcome/subject.txt').strip()
+                message = render_to_string('emails/welcome/body.txt', {
+                    'user': user,
+                    'user_language': user_language
+                })
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email='noreply@blogapi.com',
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
             
+            refresh = RefreshToken.for_user(user)
             logger.info('User registered successfully: %s', user.email)
             
             return Response({
@@ -43,6 +54,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         
         logger.warning('Registration failed: %s', serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     
     @action(detail=False, methods=['patch'], permission_classes=[IsAuthenticated])
     def language(self, request):
@@ -62,41 +74,3 @@ class AuthViewSet(viewsets.GenericViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=False, methods=['post'])
-    @method_decorator(ratelimit(key='ip',rate='5/m',method='POST', block=True))
-    def register(self, request):
-        logger.info('Registration attempt for email: %s', request.data.get('email'))
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            user_language = request.data.get('preferred_language', 'en')
-            with translation.override(user_language):
-                subject = render_to_string('emails/welcome/subject.txt').strip()
-                message = render_to_string('emails/welcome/body.txt',
-                                           {
-                                               'user': user,
-                                               'user_language': user_language
-                                           })
-                send_mail(
-                    subject=subject, 
-                    message=message,
-                    
-                    from_email='noreply@blogapi.com',
-                    
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                    )
-                
-                refresh = RefreshToken.for_user(user)
-                logger.info('User registered successfully: %s', user.email)
-                
-                return Response({
-                    'user':UserSerializer(user).data,
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                },
-                                status=status.HTTP_201_CREATED)
-                    
-                logger.warning('Registration failed: %s', serializer.errors)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)          
-                
