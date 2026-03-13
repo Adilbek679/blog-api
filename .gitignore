@@ -39,3 +39,7 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media.DS_Store
+.DS_Store
+apps/.DS_Store
+apps/blog/.DS_Store
+apps/blog/management/.DS_Store
