@@ -32,6 +32,7 @@ ALLOWED_HOSTS: list[str] = config["ALLOWED_HOSTS"]
 # ---------------------------------------------------------------------------
 
 INSTALLED_APPS: list[str] = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -47,7 +48,6 @@ INSTALLED_APPS: list[str] = [
     # Local apps
     "apps.users",
     "apps.blog",
-    "drapne",
     "channels",
     "apps.notifications",
 ]

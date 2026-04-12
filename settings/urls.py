@@ -25,42 +25,42 @@ from apps.users.views_token import (
 # ---------------------------------------------------------------------------
 
 router = DefaultRouter()
-router.register(r"posts", PostViewSet, basename="post")
+router.register(r"posts", PostViewSet, basename="post") # type: ignore
 
 # ---------------------------------------------------------------------------
 # URL patterns
 # ---------------------------------------------------------------------------
 
-urlpatterns = [
+urlpatterns = [ # type: ignore
     path("admin/", admin.site.urls),
     # --- Authentication endpoints -------------------------------------------
     path(
         "api/auth/register/",
-        AuthViewSet.as_view({"post": "register"}),
+        AuthViewSet.as_view({"post": "register"}), # type: ignore
         name="register",
     ),
     path(
         "api/auth/token/",
-        RateLimitedTokenObtainPairView.as_view(),
+        RateLimitedTokenObtainPairView.as_view(), # type: ignore
         name="token_obtain_pair",
     ),
     path(
         "api/auth/token/refresh/",
-        RateLimitedTokenRefreshView.as_view(),
+        RateLimitedTokenRefreshView.as_view(), # type: ignore
         name="token_refresh",
     ),
     # --- Blog API (router-generated routes) ---------------------------------
-    path("api/", include(router.urls)),
+    path("api/", include(router.urls)), # type: ignore
     # --- OpenAPI schema & docs ----------------------------------------------
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"), # type: ignore
     path(
         "api/docs/",
-        SpectacularSwaggerView.as_view(url_name="schema"),
+        SpectacularSwaggerView.as_view(url_name="schema"), # type: ignore
         name="swagger-ui",
     ),
     path(
         "api/redoc/",
-        SpectacularRedocView.as_view(url_name="schema"),
+        SpectacularRedocView.as_view(url_name="schema"), # type: ignore
         name="redoc",
     ),
     path("api/", include("apps.notifications.urls")),
@@ -68,7 +68,7 @@ urlpatterns = [
 
 # Serve user-uploaded media files in development only.
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) # type: ignore
 
 
 # ---------------------------------------------------------------------------
