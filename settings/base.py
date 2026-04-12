@@ -122,7 +122,23 @@ TEMPLATES: list[dict[str, Any]] = [
 ]
 
 WSGI_APPLICATION: str = "settings.wsgi.application"
-
+# ASGI application — required for Django Channels
+ASGI_APPLICATION = "settings.asgi.application"
+ 
+# Channel layer — Redis backend for WebSocket group messaging
+CHANNEL_LAYERS = { # type: ignore
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            # Use a separate Redis database (db=2) to avoid collisions
+            # with the cache (db=0) and Celery broker (db=1).
+            "hosts": [("redis", 6379)],
+            "capacity": 1500,
+            "expiry": 10,
+        },
+    },
+}
+ 
 # ---------------------------------------------------------------------------
 # Password validation
 # ---------------------------------------------------------------------------
