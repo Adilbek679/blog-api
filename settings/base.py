@@ -47,6 +47,9 @@ INSTALLED_APPS: list[str] = [
     # Local apps
     "apps.users",
     "apps.blog",
+    "drapne",
+    "channels",
+    "apps.notifications",
 ]
 
 # ---------------------------------------------------------------------------
