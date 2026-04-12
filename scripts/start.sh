@@ -1,4 +1,4 @@
-/bin/bash
+#!/bin/bash
 
 # Blog API Setup Script
 # This script sets up the entire project from scratch
@@ -78,13 +78,13 @@ echo -e "${GREEN}✓ Translations compiled${NC}"
 # Create superuser if it doesn't exist
 echo -e "\n${YELLOW}Creating superuser...${NC}"
 python manage.py shell -c "
-from django.contrib.auth import get_user_model;
-User = get_user_model();
+from django.contrib.auth import get_user_model
+User = get_user_model()
 if not User.objects.filter(email='admin@example.com').exists():
-    User.objects.create_superuser('admin@example.com', 'admin123', first_name='Admin', last_name='User');
-    print('✓ Superuser created');
+    User.objects.create_superuser('admin@example.com', 'admin123', first_name='Admin', last_name='User')
+    print('✓ Superuser created')
 else:
-    print('✓ Superuser already exists');
+    print('✓ Superuser already exists')
 "
 
 # Seed database with test data
@@ -105,7 +105,7 @@ for i in range(1, 6):
         defaults={
             'first_name': f'Test{i}',
             'last_name': 'User',
-            'preferred_language': random.choice(['en', 'ru', 'kk'])
+            'preferred_language': random.choice(['en', 'ru', 'kz']),
         }
     )
     if created:
@@ -115,8 +115,9 @@ for i in range(1, 6):
 print('✓ Test users created')
 
 # Create categories
+# Note: field is name_kz (not name_kk) — must match the model definition
 categories = []
-for name_en, name_ru, name_kk in [
+for name_en, name_ru, name_kz in [
     ('Technology', 'Технологии', 'Технология'),
     ('Travel', 'Путешествия', 'Саяхат'),
     ('Food', 'Еда', 'Тағам'),
@@ -127,7 +128,7 @@ for name_en, name_ru, name_kk in [
         defaults={
             'name_en': name_en,
             'name_ru': name_ru,
-            'name_kk': name_kk
+            'name_kz': name_kz,
         }
     )
     categories.append(cat)
@@ -145,16 +146,16 @@ posts = []
 for i in range(1, 26):
     author = random.choice(users)
     category = random.choice(categories)
-    status = PostStatus.PUBLISHED if i > 5 else PostStatus.DRAFT
-    
+    post_status = PostStatus.PUBLISHED if i > 5 else PostStatus.DRAFT
+
     post, created = Post.objects.get_or_create(
-        title=f'Sample Post {i}',
         slug=f'sample-post-{i}',
         defaults={
+            'title': f'Sample Post {i}',
             'author': author,
             'body': f'This is the body of sample post {i}. ' * 10,
             'category': category,
-            'status': status
+            'status': post_status,
         }
     )
     if created:
@@ -162,14 +163,14 @@ for i in range(1, 26):
     posts.append(post)
 print('✓ Posts created')
 
-# Create comments
+# Create comments (only on the first 20 posts)
 for post in posts[:20]:
     for _ in range(random.randint(1, 5)):
         author = random.choice(users)
         Comment.objects.get_or_create(
             post=post,
             author=author,
-            body=f'This is a comment on {post.title}',
+            defaults={'body': f'This is a comment on {post.title}'},
         )
 print('✓ Comments created')
 "
@@ -193,4 +194,4 @@ echo -e "Password: password123"
 echo -e "\n${YELLOW}Press Ctrl+C to stop the server${NC}"
 echo -e "${GREEN}========================================${NC}"
 
-python manage.py runserver]''
+python manage.py runserver

@@ -1,54 +1,96 @@
-from django.contrib import admin
-from django.http import JsonResponse
-from django.urls import path, include
+"""Root URL configuration for the blog project."""
+
 from django.conf import settings
 from django.conf.urls.static import static
-from django.utils.decorators import method_decorator
-from django_ratelimit.decorators import ratelimit
-from django_ratelimit.exceptions import Ratelimited
+from django.contrib import admin
+from django.http import HttpRequest, JsonResponse
+from django.urls import include, path
+from django_ratelimit.exceptions import Ratelimited  # type: ignore[import-untyped]
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from apps.users.views import AuthViewSet
+
 from apps.blog.views import PostViewSet
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from apps.users.views import AuthViewSet
+from apps.users.views_token import (
+    RateLimitedTokenObtainPairView,
+    RateLimitedTokenRefreshView,
+)
 
-# Rate-limited views
-RateLimitedTokenObtainPairView = method_decorator(
-    ratelimit(key='ip', rate='10/m', method='POST'),
-    name='post'
-)(TokenObtainPairView)
-
-RateLimitedTokenRefreshView = method_decorator(
-    ratelimit(key='ip', rate='10/m', method='POST'),
-    name='post'
-)(TokenRefreshView)
+# ---------------------------------------------------------------------------
+# Router — auto-generates standard CRUD URLs for registered ViewSets
+# ---------------------------------------------------------------------------
 
 router = DefaultRouter()
-router.register(r'posts', PostViewSet, basename='post')
+router.register(r"posts", PostViewSet, basename="post")
+
+# ---------------------------------------------------------------------------
+# URL patterns
+# ---------------------------------------------------------------------------
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    
-    # API auth endpoints with rate limiting
-    path('api/auth/register/', AuthViewSet.as_view({'post': 'register'}), name='register'),
-    path('api/auth/token/', RateLimitedTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/token/refresh/', RateLimitedTokenRefreshView.as_view(), name='token_refresh'),
-    
-    # API blog endpoints
-    path('api/', include(router.urls)),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/',SpectacularSwaggerView.as_view(url_name='schema'), name = 'swagger-ui'),
-    path('api/redoc/',SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path("admin/", admin.site.urls),
+    # --- Authentication endpoints -------------------------------------------
+    path(
+        "api/auth/register/",
+        AuthViewSet.as_view({"post": "register"}),
+        name="register",
+    ),
+    path(
+        "api/auth/token/",
+        RateLimitedTokenObtainPairView.as_view(),
+        name="token_obtain_pair",
+    ),
+    path(
+        "api/auth/token/refresh/",
+        RateLimitedTokenRefreshView.as_view(),
+        name="token_refresh",
+    ),
+    # --- Blog API (router-generated routes) ---------------------------------
+    path("api/", include(router.urls)),
+    # --- OpenAPI schema & docs ----------------------------------------------
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "api/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
 ]
 
+# Serve user-uploaded media files in development only.
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# Custom 403 handler: 429 with required body when rate limit exceeded, else 403
-def handler403(request, exception=None):
-    if exception is not None and isinstance(exception, Ratelimited):
+
+# ---------------------------------------------------------------------------
+# Custom error handlers
+# ---------------------------------------------------------------------------
+
+
+def handler403(
+    request: HttpRequest,
+    exception: Exception | None = None,
+) -> JsonResponse:
+    """Return 429 when a rate-limit is hit; otherwise return 403 Forbidden.
+
+    Args:
+        request: The current HTTP request.
+        exception: The exception that triggered the 403, if any.
+
+    Returns:
+        A JSON response with the appropriate status code.
+    """
+    if isinstance(exception, Ratelimited):
         return JsonResponse(
-            {'detail': 'Too many requests. Try again later.'},
+            {"detail": "Too many requests. Try again later."},
             status=429,
         )
-    return JsonResponse({'detail': 'Permission denied.'}, status=403)
+    return JsonResponse({"detail": "Permission denied."}, status=403)

@@ -1,18 +1,17 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Russian translations for Blog API.
+# Copyright (C) 2026 Blog API Team
+# This file is distributed under the same license as the Blog API package.
+# Blog API Team <noreply@blogapi.com>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Project-Id-Version: blog-api 1.0.0\n"
+"Report-Msgid-Bugs-To: noreply@blogapi.com\n"
 "POT-Creation-Date: 2026-03-13 19:11+0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2026-03-13 19:11+0500\n"
+"Last-Translator: Blog API Team <noreply@blogapi.com>\n"
+"Language-Team: Russian <noreply@blogapi.com>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,7 +19,6 @@ msgstr ""
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
 "(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
-#: apps/blog/models.py:15
 #: templates/emails/welcome/body.txt:3
 msgid "Hello"
 msgstr "Здравствуйте"
