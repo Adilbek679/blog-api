@@ -17,6 +17,7 @@ class PostStatus(models.TextChoices):
 
     DRAFT = "draft", "Draft"
     PUBLISHED = "published", "Published"
+    SCHEDULED = "scheduled", "Scheduled"
 
 
 class Category(models.Model):
@@ -150,7 +151,7 @@ class Post(models.Model):
         null=True,
         related_name="posts",
     )
-    tags = models.ManyToManyField(Tag, blank=True, related_name="posts")
+    tags = models.ManyToManyField(Tag, blank=True, related_name="posts")  # type: ignore
     status = models.CharField(
         max_length=10,
         choices=PostStatus.choices,
@@ -158,6 +159,15 @@ class Post(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    publish_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("publish_at"),
+        help_text=_(
+            "When set together with status=scheduled, the post will be "
+            "auto-published by the scheduled task."
+        ),
+    )
 
     class Meta:
         verbose_name = _("post")

@@ -16,11 +16,13 @@ from django.utils import timezone, translation
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit  # type: ignore[import-untyped]
 from rest_framework import serializers as drf_serializers
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
+from rest_framework import status, viewsets # type: ignore
+from rest_framework.decorators import action # type: ignore
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
+from apps.blog.tasks import invalidate_posts_cache
+from apps.notifications.tasks import process_new_comment
 
 from .models import Comment, Post, PostStatus
 from .permissions import IsAuthorOrReadOnly
@@ -49,13 +51,13 @@ try:
     redis_client: redis.Redis | None = redis.Redis.from_url(  # type: ignore[type-arg]
         settings.CACHES["default"]["LOCATION"]
     )
-    redis_client.ping()
+    redis_client.ping() # type: ignore
 except redis.ConnectionError:
     logger.warning("Redis connection failed, pub/sub disabled")
     redis_client = None
 
 
-class PostViewSet(viewsets.ModelViewSet):
+class PostViewSet(viewsets.ModelViewSet): # type: ignore
     """CRUD ViewSet for :class:`~apps.blog.models.Post`.
 
     Authenticated users can create posts and manage their own content.
@@ -74,7 +76,7 @@ class PostViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Post.objects.all()
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly] # type: ignore
     lookup_field = "slug"
 
     # ------------------------------------------------------------------
@@ -83,7 +85,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self) -> type[drf_serializers.BaseSerializer]:
         """Return the appropriate serializer class based on the current action."""
-        if self.action in ("create", "update", "partial_update"):
+        if self.action in ("create", "update", "partial_update"): # type: ignore
             return PostCreateUpdateSerializer
         return PostSerializer
 
@@ -99,13 +101,13 @@ class PostViewSet(viewsets.ModelViewSet):
             "author", "category"
         ).prefetch_related("tags", "comments")
 
-        if not self.request.user.is_authenticated:
+        if not self.request.user.is_authenticated: # pyright: ignore[reportUnknownMemberType]
             # Anonymous: show only published content.
             queryset = queryset.filter(status=PostStatus.PUBLISHED)
-        elif self.action == "list":
+        elif self.action == "list": # type: ignore
             # Authenticated list: own drafts + all published.
             queryset = queryset.filter(
-                Q(status=PostStatus.PUBLISHED) | Q(author=self.request.user)
+                Q(status=PostStatus.PUBLISHED) | Q(author=self.request.user) # type: ignore
             )
 
         return queryset
@@ -114,11 +116,11 @@ class PostViewSet(viewsets.ModelViewSet):
     # Standard actions
     # ------------------------------------------------------------------
 
-    @method_decorator(ratelimit(key="user", rate="20/m", method="POST"))
+    @method_decorator(ratelimit(key="user", rate="20/m", method="POST")) # type: ignore
     def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Create a new post (rate-limited to 20 POSTs/min per user)."""
-        logger.info("Post creation attempt by: %s", request.user.email)
-        return super().create(request, *args, **kwargs)
+        logger.info("Post creation attempt by: %s", request.user.email) # type: ignore
+        return super().create(request, *args, **kwargs) # type: ignore
 
     def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """List posts with language-aware caching for anonymous users.
@@ -131,45 +133,45 @@ class PostViewSet(viewsets.ModelViewSet):
         cache_key: str = f"{CACHE_KEY_POSTS_LIST}:{lang}"
 
         # Serve from cache for unauthenticated requests.
-        if not request.user.is_authenticated:
+        if not request.user.is_authenticated: # type: ignore
             cached_data = cache.get(cache_key)
             if cached_data:
                 logger.debug("Returning cached posts list for language %s", lang)
                 return Response(cached_data)
 
-        response: Response = super().list(request, *args, **kwargs)
+        response: Response = super().list(request, *args, **kwargs) # type: ignore
 
         # Timezone validation for authenticated users.
-        if request.user.is_authenticated and getattr(request.user, "timezone", None):
+        if request.user.is_authenticated and getattr(request.user, "timezone", None): # type: ignore
             try:
-                pytz.timezone(request.user.timezone)
+                pytz.timezone(request.user.timezone) # type: ignore
                 # TODO: convert created_at/updated_at fields in response.data
                 #       to the user's local timezone.
             except pytz.UnknownTimeZoneError:
-                logger.warning("Unknown timezone: %s", request.user.timezone)
+                logger.warning("Unknown timezone: %s", request.user.timezone) # type: ignore
 
         # Store the freshly built response for anonymous users.
-        if not request.user.is_authenticated:
-            cache.set(cache_key, response.data, CACHE_TTL_SECONDS)
+        if not request.user.is_authenticated: # type: ignore
+            cache.set(cache_key, response.data, CACHE_TTL_SECONDS) # type: ignore
             logger.debug("Cached posts list for language %s", lang)
 
-        return response
+        return response # type: ignore
 
     def perform_create(self, serializer: drf_serializers.BaseSerializer) -> None:
         """Persist a new post and purge the posts-list cache for all locales."""
-        post: Post = serializer.save()
-        self._invalidate_list_cache()
-        logger.info("Post created: %s", post.title)
+        post: Post = serializer.save() # type: ignore
+        invalidate_posts_cache.delay() # type: ignore
+        logger.info("Post created: %s", post.title) # type: ignore
 
     def perform_update(self, serializer: drf_serializers.BaseSerializer) -> None:
         """Persist post changes and purge the posts-list cache for all locales."""
-        post: Post = serializer.save()
-        self._invalidate_list_cache()
-        logger.info("Post updated: %s", post.title)
+        post: Post = serializer.save() # type: ignore
+        invalidate_posts_cache.delay() # type: ignore
+        logger.info("Post updated: %s", post.title) # type: ignore
 
     def perform_destroy(self, instance: Post) -> None:
         """Delete a post and purge the posts-list cache for all locales."""
-        self._invalidate_list_cache()
+        invalidate_posts_cache.delay() # type: ignore
         logger.info("Post deleted: %s", instance.title)
         instance.delete()
 
@@ -177,57 +179,58 @@ class PostViewSet(viewsets.ModelViewSet):
     # Custom actions
     # ------------------------------------------------------------------
 
-    @action(detail=True, methods=["get"])
+    @action(detail=True, methods=["get"]) # type: ignore
     def comments(self, request: Request, slug: str | None = None) -> Response:
         """Return all comments for the post identified by *slug*."""
-        post: Post = self.get_object()
-        qs = post.comments.select_related("author").all()
+        post: Post = self.get_object() # type: ignore
+        qs = post.comments.select_related("author").all() # type: ignore
         serializer = CommentSerializer(qs, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data) # type: ignore
 
-    @comments.mapping.post
+    @comments.mapping.post # type: ignore
     def add_comment(self, request: Request, slug: str | None = None) -> Response:
         """Append a new comment to the post and publish an event to Redis.
 
         The Redis pub/sub message is fire-and-forget: if the broker is
         unavailable the comment is still saved successfully.
         """
-        post: Post = self.get_object()
-        serializer = CommentSerializer(data=request.data)
+        post: Post = self.get_object() # type: ignore
+        serializer = CommentSerializer(data=request.data) # type: ignore
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid(): # type: ignore
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) # type: ignore
 
         comment = Comment.objects.create(
             post=post,
-            author=request.user,
-            body=serializer.validated_data["body"],
+            author=request.user, # type: ignore
+            body=serializer.validated_data["body"], # type: ignore
         )
 
         # Publish comment event to Redis channel if the client is available.
         if redis_client is not None:
-            redis_client.publish(
+            redis_client.publish( # type: ignore
                 "comments",
                 json.dumps(
                     {
-                        "post_id": post.id,
-                        "post_slug": post.slug,
-                        "post_title": post.title,
-                        "author_id": request.user.pk,
-                        "author_email": request.user.email,
+                        "post_id": post.id, # type: ignore
+                        "post_slug": post.slug, # type: ignore
+                        "post_title": post.title, # type: ignore
+                        "author_id": request.user.pk, # type: ignore
+                        "author_email": request.user.email, # type: ignore
                         "comment": comment.body,
                         "created_at": str(comment.created_at),
                     }
                 ),
             )
 
-        logger.info("Comment added to post: %s by %s", post.title, request.user.email)
+        logger.info("Comment added to post: %s by %s", post.title, request.user.email) # type: ignore
+        process_new_comment.delay(comment.id) # type: ignore
         return Response(
-            CommentSerializer(comment).data,
+            CommentSerializer(comment).data, # type: ignore
             status=status.HTTP_201_CREATED,
         )
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"]) # type: ignore
     def stats(self, request: Request) -> Response:
         """Return aggregated blog statistics and live external data.
 

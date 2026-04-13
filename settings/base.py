@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from django.utils.translation import gettext_lazy as _
+from decouple import config as env
 
 from .conf import get_config
 
@@ -138,6 +139,15 @@ CHANNEL_LAYERS = { # type: ignore
         },
     },
 }
+
+CELERY_BROKEN_URL: str = env(
+    "BLOG_CELERY_BROKEN_URL",
+    default="redis://localhost:6379/1",
+)
+CELERY_RESULT_BACKEND: str = CELERY_BROKEN_URL
+CELERY_ACCEPT_CONTENT: list[str] = ["json"]
+CELERY_TASK_SERIALIZER: str = "json"
+CELERY_RESULT_SERIALIZER: str = "UTC"
  
 # ---------------------------------------------------------------------------
 # Password validation
