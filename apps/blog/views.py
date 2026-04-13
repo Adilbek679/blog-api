@@ -15,12 +15,12 @@ from django.db.models import Q, QuerySet
 from django.utils import timezone, translation
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit  # type: ignore[import-untyped]
-from rest_framework import serializers as drf_serializers
+from rest_framework import serializers as drf_serializers # type: ignore
 from rest_framework import status, viewsets # type: ignore
 from rest_framework.decorators import action # type: ignore
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.request import Request
-from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly # type: ignore
+from rest_framework.request import Request # type: ignore
+from rest_framework.response import Response # type: ignore
 from apps.blog.tasks import invalidate_posts_cache
 from apps.notifications.tasks import process_new_comment
 
@@ -83,13 +83,13 @@ class PostViewSet(viewsets.ModelViewSet): # type: ignore
     # Serializer & queryset selection
     # ------------------------------------------------------------------
 
-    def get_serializer_class(self) -> type[drf_serializers.BaseSerializer]:
+    def get_serializer_class(self) -> type[drf_serializers.BaseSerializer]: # type: ignore
         """Return the appropriate serializer class based on the current action."""
         if self.action in ("create", "update", "partial_update"): # type: ignore
             return PostCreateUpdateSerializer
         return PostSerializer
 
-    def get_queryset(self) -> QuerySet[Post]:
+    def get_queryset(self) -> QuerySet[Post]: # type: ignore
         """Filter posts based on the authentication state.
 
         - Anonymous users: only published posts.

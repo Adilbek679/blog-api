@@ -1,16 +1,19 @@
 from ..base import *  # noqa: F403
 
-DEBUG = True
+DEBUG = True # type: ignore
+
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',  # noqa: F405
-    }
+    'default': dj_database_url.config(
+        env='BLOG_DATABASE_URL',
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,
+    )
 }
 
 # Logging for debug
-LOGGING = {
+LOGGING = { # type: ignore
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
@@ -77,7 +80,7 @@ LOGGING = {
 }
 
 # Cache with Redis
-CACHES = {
+CACHES = { # type: ignore
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
         'LOCATION': config['REDIS_URL'],  # noqa: F405

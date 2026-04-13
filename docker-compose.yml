@@ -1,0 +1,111 @@
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — основная база данных
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: blogapi
+      POSTGRES_USER: blogapi
+      POSTGRES_PASSWORD: blogapi
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "blogapi"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Redis — broker, cache, channel layer
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Django (Daphne ASGI) — HTTP + WebSockets
+  # ---------------------------------------------------------------------------
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - settings/.env
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      daphne -b 0.0.0.0 -p 8000 settings.asgi:application
+
+  # ---------------------------------------------------------------------------
+  # Celery worker
+  # ---------------------------------------------------------------------------
+  celery_worker:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - settings/.env
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A settings worker -l info
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat
+  # ---------------------------------------------------------------------------
+  celery_beat:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - settings/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A settings beat -l info
+
+  # ---------------------------------------------------------------------------
+  # Flower — мониторинг Celery
+  # ---------------------------------------------------------------------------
+  flower:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    env_file:
+      - settings/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A settings flower
+      --basic-auth=${BLOG_FLOWER_USER}:${BLOG_FLOWER_PASSWORD}
+
+# ---------------------------------------------------------------------------
+# Named volumes
+# ---------------------------------------------------------------------------
+volumes:
+  postgres_data:
+  media_data:

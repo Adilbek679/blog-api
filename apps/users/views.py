@@ -4,7 +4,9 @@ import logging
 from typing import Any, cast
 
 from django.utils.decorators import method_decorator
-from django_ratelimit.decorators import ratelimit, # type: ignore
+from django_ratelimit.decorators import (  # type: ignore[import-untyped]
+    ratelimit,# type: ignore
+)
 
 from rest_framework import status, viewsets  # type: ignore[import-untyped]
 from rest_framework.decorators import action  # type: ignore[import-untyped]
