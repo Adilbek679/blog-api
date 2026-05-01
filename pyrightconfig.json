@@ -1,4 +1,5 @@
 {
     "typeCheckingMode": "basic",
-    "stubPath": "stubs"
+    "stubPath": "stubs",
+    "extraPaths": ["./apps"],
 }
