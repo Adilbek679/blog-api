@@ -140,7 +140,7 @@ class PostStreamView(APIView):  # type: ignore[misc]
             # pubsub.listen() yields untyped messages — cast each message
             # to a known dict shape so downstream access is type-safe.
             async for raw_message in (  # type: ignore[misc]
-                pubsub.listen() # type: ignore
+                pubsub.listen()  # type: ignore
             ):
                 message: dict[str, str] = cast(
                     dict[str, str], raw_message

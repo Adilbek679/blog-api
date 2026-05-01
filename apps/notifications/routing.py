@@ -10,9 +10,9 @@ from . import consumers
 # use as_asgi() which returns an _ASGIApplicationProtocol — a type unknown
 # to Django stubs.  We suppress the overload mismatch and annotate the list
 # as list[URLPattern | URLResolver] which is what URLRouter expects.
-websocket_urlpatterns: list[URLPattern | URLResolver] = [ # type: ignore
+websocket_urlpatterns: list[URLPattern | URLResolver] = [  # type: ignore
     re_path(  # type: ignore[arg-type]
         r"^ws/posts/(?P<slug>[-\w]+)/comments/$",
-        consumers.CommentConsumer.as_asgi(), # pyright: ignore[reportArgumentType]
+        consumers.CommentConsumer.as_asgi(),  # pyright: ignore[reportArgumentType]
     ),
 ]
