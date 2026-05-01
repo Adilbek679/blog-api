@@ -35,14 +35,21 @@ services:
   # ---------------------------------------------------------------------------
   # Django (Daphne ASGI) — HTTP + WebSockets
   # ---------------------------------------------------------------------------
+  # Note: port 8000 is NOT published to the host any more.  All external
+  # traffic now enters through the nginx service on port 80.  The web service
+  # still listens on 8000 inside the Compose network, so other containers
+  # (celery_worker, nginx) can reach it via `web:8000`.
   web:
     build: .
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - settings/.env
     volumes:
+      # `staticfiles` is populated by `collectstatic` in entrypoint.sh, then
+      # served read-only by nginx from the same named volume.
+      - static_data:/app/staticfiles
       - media_data:/app/media
     depends_on:
       db:
@@ -51,6 +58,25 @@ services:
         condition: service_healthy
     command: >
       daphne -b 0.0.0.0 -p 8000 settings.asgi:application
+
+  # ---------------------------------------------------------------------------
+  # nginx — reverse proxy, static/media file server, WebSocket gateway
+  # ---------------------------------------------------------------------------
+  # Only this service is reachable from the host.  It terminates HTTP on :80
+  # and forwards application traffic to Daphne via the `django_backend`
+  # upstream defined in nginx/default.conf.
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      # Read-only mounts: nginx must not modify these files.
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_data:/var/www/static:ro
+      - media_data:/var/www/media:ro
+    depends_on:
+      - web
 
   # ---------------------------------------------------------------------------
   # Celery worker
@@ -109,3 +135,4 @@ services:
 volumes:
   postgres_data:
   media_data:
+  static_data:
